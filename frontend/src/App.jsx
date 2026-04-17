@@ -7,6 +7,8 @@ import Home from "./pages/Home";
 import AuthPage from "./pages/AuthPage";
 import CreateProduct from "./pages/CreateProduct";
 import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Orders from "./pages/Orders";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -215,6 +217,8 @@ function App() {
                   />
                 }
               />
+              <Route path="/cart" element={<Cart user={user} />} />
+              <Route path="/orders" element={<Orders user={user} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

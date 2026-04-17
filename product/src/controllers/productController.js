@@ -215,3 +215,67 @@ export const deleteProduct = async (req, res) => {
         });
     }
 };
+
+export const reserveInventory = async (req, res) => {
+    try {
+        const { items } = req.body;
+
+        for (const item of items) {
+            const product = await Product.findById(item.productId);
+            if (!product) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Product ${item.productId} not found`
+                });
+            }
+
+            if (product.stock < item.quantity) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Insufficient stock for product ${product.title}`
+                });
+            }
+
+            // Reserve stock (you might want to add a reserved field to the schema)
+            product.stock -= item.quantity;
+            await product.save();
+        }
+
+        res.json({
+            success: true,
+            message: 'Inventory reserved successfully'
+        });
+    } catch (error) {
+        console.error('Error reserving inventory:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to reserve inventory'
+        });
+    }
+};
+
+export const releaseInventory = async (req, res) => {
+    try {
+        const { items } = req.body;
+
+        for (const item of items) {
+            const product = await Product.findById(item.productId);
+            if (product) {
+                // Release reserved stock
+                product.stock += item.quantity;
+                await product.save();
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Inventory released successfully'
+        });
+    } catch (error) {
+        console.error('Error releasing inventory:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to release inventory'
+        });
+    }
+};

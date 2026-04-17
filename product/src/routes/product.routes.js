@@ -1,6 +1,6 @@
 import express from "express";
 import multer from 'multer';
-import { createProduct, getProducts, getProductById, updateProduct, deleteProduct } from '../controllers/productController.js';
+import { createProduct, getProducts, getProductById, updateProduct, deleteProduct, reserveInventory, releaseInventory } from '../controllers/productController.js';
 import createAuthMiddleware from "../middleware/auth.middleware.js";
 import { validateCreateProduct } from "../middleware/validation.middleware.js";
 
@@ -38,5 +38,11 @@ router.put('/:id', createAuthMiddleware(['admin', 'seller']), upload.array('Imag
 
 // DELETE /api/products/:id
 router.delete('/:id', createAuthMiddleware(['admin', 'seller']), deleteProduct);
+
+// POST /api/products/reserve - Reserve inventory for order
+router.post('/reserve', reserveInventory);
+
+// POST /api/products/release - Release reserved inventory
+router.post('/release', releaseInventory);
 
 export default router;

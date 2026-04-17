@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../services/api";
 
 export default function ProductCard({
   product,
@@ -8,6 +9,7 @@ export default function ProductCard({
   onAddImages,
 }) {
   const [files, setFiles] = useState([]);
+  const [quantity, setQuantity] = useState(1);
   const owner =
     currentUser &&
     (currentUser.role === "admin" || currentUser.id === product.seller);
@@ -21,6 +23,19 @@ export default function ProductCard({
     if (files.length === 0) return;
     onAddImages(product._id, files);
     setFiles([]);
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      await api.post("/cart/items", {
+        productId: product._id,
+        quantity,
+      });
+      alert("Added to cart!");
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Failed to add to cart");
+    }
   };
 
   return (
@@ -66,6 +81,23 @@ export default function ProductCard({
           >
             View details
           </Link>
+          {currentUser && !owner && (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value))}
+                className="w-16 rounded border px-2 py-1 text-sm"
+              />
+              <button
+                onClick={handleAddToCart}
+                className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600"
+              >
+                Add to Cart
+              </button>
+            </div>
+          )}
           {owner && (
             <button
               onClick={() => onDelete(product._id)}
