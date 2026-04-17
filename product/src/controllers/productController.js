@@ -1,21 +1,6 @@
 import Product from '../models/product.model.js';
 import imageKitService from '../services/imagekitservice.js';
 
-export const getProducts = async (req, res) => {
-    try {
-        const products = await Product.find();
-        res.status(200).json({
-            success: true,
-            data: products
-        });
-    } catch (error) {
-        console.error('Error fetching products:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Internal server error'
-        });
-    }
-};
 
 export const createProduct = async (req, res) => {
     try {
@@ -65,6 +50,165 @@ export const createProduct = async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating product:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const getProducts = async (req, res) => {
+    try {
+        const { q, minprice, maxprice, skip = 0, limit = 20 } = req.query;
+
+        const filter = {};
+        if (q) {
+            filter.$text = { $search: q };
+        }
+        if (minprice) {
+            filter.priceAmount = { ...filter.priceAmount, $gte: Number(minprice) };
+        }
+        if (maxprice) {
+            filter.priceAmount = { ...filter.priceAmount, $lte: Number(maxprice) };
+        }
+        const products = await Product.find(filter).skip(Number(skip)).limit(Math.min(Number(limit), 50));
+        res.json({
+            success: true,
+            message: 'Products retrieved successfully',
+            data: products
+        });
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+}
+
+export const getProductById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+        res.json({
+            success: true,
+            message: 'Product retrieved successfully',
+            data: product
+        });
+    } catch (error) {
+        console.error('Error fetching product:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+}
+export const updateProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, description, priceAmount, priceCurrency } = req.body;
+
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        // Check if user is authorized (seller or admin)
+        if (req.user.role !== 'admin' && product.seller.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to update this product'
+            });
+        }
+
+        // Update fields
+        if (title) product.title = title;
+        if (description) product.description = description;
+        if (priceAmount) product.priceAmount = Number(priceAmount);
+        if (priceCurrency) product.priceCurrency = priceCurrency || 'INR';
+
+        // Handle image updates if provided
+        if (req.files && req.files.length > 0) {
+            try {
+                const uploadPromises = req.files.map(file => imageKitService.uploadImage(file));
+                const uploadResults = await Promise.all(uploadPromises);
+                const newImages = uploadResults.map(result => ({
+                    url: result.url,
+                    fileId: result.fileId,
+                    thumbnail: result.thumbnail
+                }));
+                product.images = [...product.images, ...newImages]; // Append new images
+            } catch (uploadError) {
+                console.error('Image upload error:', uploadError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload images'
+                });
+            }
+        }
+
+        await product.save();
+
+        res.json({
+            success: true,
+            message: 'Product updated successfully',
+            data: product
+        });
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+export const deleteProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const product = await Product.findById(id);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: 'Product not found'
+            });
+        }
+
+        if (req.user.role !== 'admin' && product.seller.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to delete this product'
+            });
+        }
+
+        if (product.images && product.images.length > 0) {
+            try {
+                const deletePromises = product.images
+                    .filter(image => image.fileId)
+                    .map(image => imageKitService.deleteImage(image.fileId));
+                await Promise.all(deletePromises);
+            } catch (deleteError) {
+                console.error('Image delete error:', deleteError);
+            }
+        }
+
+        await product.deleteOne();
+
+        res.json({
+            success: true,
+            message: 'Product deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting product:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'

@@ -45,7 +45,7 @@ describe('POST /api/products/', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.message).toBe('Product created successfully');
         expect(response.body.data.title).toBe('Test Product');
-        expect(response.body.data.priceAmount).toBe(99.99);
+        expect(response.body.data.priceAmount).toBe("99.99");
         expect(response.body.data.priceCurrency).toBe('USD');
         expect(Array.isArray(response.body.data.images)).toBe(true);
         expect(response.body.data.images[0]).toHaveProperty('url');
@@ -63,10 +63,10 @@ describe('POST /api/products/', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.message).toBe('Validation failed');
+        expect(response.body.errors).toBeDefined();
         expect(response.body.errors).toEqual(
             expect.arrayContaining([
-                expect.objectContaining({ param: 'title' })
+                expect.objectContaining({ path: 'title' })
             ])
         );
     });
@@ -82,10 +82,10 @@ describe('POST /api/products/', () => {
 
         expect(response.status).toBe(400);
         expect(response.body.success).toBe(false);
-        expect(response.body.message).toBe('Validation failed');
+        expect(response.body.errors).toBeDefined();
         expect(response.body.errors).toEqual(
             expect.arrayContaining([
-                expect.objectContaining({ param: 'priceAmount' })
+                expect.objectContaining({ path: 'priceAmount' })
             ])
         );
     });

@@ -1,11 +1,13 @@
 import 'dotenv/config';
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import connectDB from './src/config/db.js';
 import authRouter from './src/routes/auth.route.js';
 import redis from './src/config/redis.js';
 
 const app = express();
+app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 

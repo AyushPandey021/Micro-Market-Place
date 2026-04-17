@@ -26,7 +26,11 @@ const productSchema = new mongoose.Schema({
             thumbnail: String,
             fileId: String
         }
-    ]
+    ],
+    created: {
+        type: Boolean,
+        default: true
+    }
 }, {
     timestamps: true
 });
