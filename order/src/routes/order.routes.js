@@ -16,8 +16,8 @@ import {
 
 const router = express.Router();
 
-// Auth middleware for user
-const authUser = createAuthMiddleware(['user', 'admin']);
+// Auth middleware for user (both 'user' and 'seller' can create orders)
+const authUser = createAuthMiddleware(['user', 'seller', 'admin']);
 
 // Routes
 router.post('/', authUser, validateCreateOrder, createOrder);

@@ -7,7 +7,7 @@ const initialAuth = {
   firstName: "",
   lastName: "",
   email: "",
-  role: "seller",
+  role: "user",
 };
 
 export default function AuthPage({

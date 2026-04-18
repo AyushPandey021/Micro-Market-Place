@@ -46,10 +46,11 @@
 
 ### 1.4 Order Service
 
-
-
-
-### 1.5 Payment Service (Razorpay)
+- **POST `/orders`** – Create order from cart. Validates stock, calculates totals, reserves inventory. Emits `order.created`.
+- **GET `/orders/me`** – List user's orders with pagination and filters.
+- **GET `/orders/:id`** – Get order details with items and status.
+- **POST `/orders/:id/cancel`** – Cancel order (if not shipped). Updates inventory. Emits `order.cancelled`.
+- **PATCH `/orders/:id/address`** – Update shipping address (if not shipped).
 
 - **POST `/payments/razorpay/order`** – Creates Razorpay Order from server-side totals (amount, currency, receipt). Returns `{orderId, keyId}`. Idempotent per cart.
 - **GET `/payments/:id`** – Fetch payment record (status, gateway payload). RBAC: buyer or admin.
@@ -247,7 +248,7 @@ Stores user notifications (email, SMS, in-app).
 | **Auth/User Service**    | User                          | Register/login, issue tokens, manage profiles & addresses, emit USER_CREATED/UPDATED                | Needed by all services (for auth) | Emits user.created, user.updated                                      |
 | **Product Service**      | Product (and optional Review) | CRUD products, manage stock, serve product data to Cart/Order, emit PRODUCT_CREATED/UPDATED/DELETED | Cart, Order, Review Service       | Emits product.created, product.updated                                |
 | **Cart Service**         | Cart                          | Add/remove items, validate stock/price, compute totals, maintain one cart per user                  | Product Service (for price/stock) | Subscribes to product.updated (optional)                              |
-|  |
+|                          |
 | **Order Service**        | Order                         | Create/manage orders, track lifecycle, reserve inventory, emit ORDER_CREATED/UPDATED                | Cart, Payment, Notification       | Emits order.created, order.cancelled                                  |
 | **Payment Service**      | Payment                       | Handle Razorpay/Stripe integration, verify payments, emit PAYMENT_SUCCESS/FAILED                    | Order, Notification               | Emits payment.success, payment.failed                                 |
 | **Notification Service** | Notification                  | Listen to events, send emails/SMS/push, track delivery status                                       | User, Order, Payment              | Subscribes to all major events (order.created, payment.success, etc.) |

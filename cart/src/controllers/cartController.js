@@ -30,7 +30,7 @@ export const getCart = async (req, res) => {
 
 export const addToCart = async (req, res) => {
     try {
-        console.log('Add to cart request:', req.body);
+        // console.log('Add to cart request:', req.body);
         console.log('User:', req.user);
 
         const userId = req.user.id;
@@ -48,7 +48,7 @@ export const addToCart = async (req, res) => {
         try {
             const productResponse = await axios.get(`${PRODUCT_SERVICE_URL}/${productId}`);
             product = productResponse.data.data || productResponse.data;
-            console.log('Product fetched:', product);
+            // console.log('Product fetched:', product);
         } catch (productError) {
             console.error('Error fetching product, using defaults:', productError);
             // Continue with default values
@@ -75,7 +75,7 @@ export const addToCart = async (req, res) => {
         // Recalculate total
         cart.totalAmount = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-        console.log('Cart before save:', cart);
+        // console.log('Cart before save:', cart);
         await cart.save();
         console.log('Cart saved successfully');
 
