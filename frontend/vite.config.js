@@ -30,6 +30,19 @@ export default defineConfig({
                 secure: false,
                 rewrite: (path) => path
             },
+            '/api/ai-buddy': {
+                target: 'http://localhost:5005',
+                changeOrigin: true,
+                secure: false,
+                ws: true,
+                rewrite: (path) => path.replace(/^\/api\/ai-buddy/, '/ai-buddy')
+            },
+            '/socket.io': {
+                target: 'http://localhost:5005',
+                ws: true,
+                changeOrigin: true,
+                secure: false
+            },
             '/api': {
                 target: 'http://localhost:5001', // Default to order service
                 changeOrigin: true,

@@ -23,7 +23,7 @@ export const validateQueryRequest = [
             logger.warn({ errors: errors.array() }, 'Validation errors');
             return res.status(400).json({
                 success: false,
-                message: 'Validation failed',
+                message: 'Invalid query format',
                 errors: errors.array(),
             });
         }

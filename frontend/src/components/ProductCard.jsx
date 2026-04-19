@@ -11,6 +11,7 @@ export default function ProductCard({
 }) {
   const [files, setFiles] = useState([]);
   const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
   const owner =
     currentUser &&
     (currentUser.role === "admin" || currentUser.id === product.seller);
@@ -25,8 +26,6 @@ export default function ProductCard({
     onAddImages(product._id, files);
     setFiles([]);
   };
-
-  const [addingToCart, setAddingToCart] = useState(false);
 
   const handleAddToCart = async () => {
     setAddingToCart(true);
@@ -49,96 +48,135 @@ export default function ProductCard({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Link
-          to={`/product/${product._id}`}
-          className="text-left text-xl font-semibold text-slate-900 transition hover:text-slate-700"
-        >
-          {product.title}
-        </Link>
-        <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-sm text-slate-700">
-          {product.priceCurrency} {product.priceAmount}
-        </span>
-      </div>
-      <p className="mb-3 text-slate-600">
-        {product.description || "No description available."}
-      </p>
+    <article className="group rounded-3xl border border-slate-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg hover:shadow-glow hover:-translate-y-2">
+      <header className="mb-6 space-y-3">
+        <div className="flex items-start justify-between">
+          <Link
+            to={`/product/${product._id}`}
+            className="text-left text-2xl font-bold text-slate-900 line-clamp-2 hover:text-indigo-600 transition-all group-hover:font-black"
+          >
+            {product.title}
+          </Link>
+          <span className="rounded-3xl bg-gradient-to-r from-indigo-100 to-indigo-200 px-4 py-2 text-lg font-bold text-indigo-800 shadow-sm whitespace-nowrap">
+            {product.priceCurrency} {product.priceAmount}
+          </span>
+        </div>
+        <p className="text-slate-600 leading-relaxed line-clamp-3">
+          {product.description || "No description available."}
+        </p>
+      </header>
+
       {product.images && product.images.length > 0 ? (
-        <div className="grid gap-2 sm:grid-cols-3">
-          {product.images.map((image) => (
-            <img
-              key={image.url}
-              src={image.url}
-              alt={product.title}
-              className="h-32 w-full rounded-2xl object-cover"
-            />
+        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+          {product.images.slice(0, 3).map((image, index) => (
+            <Link
+              key={image.url || index}
+              to={`/product/${product._id}`}
+              className="group/image block overflow-hidden rounded-2xl shadow-sm hover:shadow-md transition-all hover:-translate-y-1"
+            >
+              <img
+                src={image.url}
+                alt={`${product.title} - image ${index + 1}`}
+                className="h-48 w-full object-cover transition-all group-hover/image:scale-105 group-hover/image:brightness-105"
+              />
+            </Link>
           ))}
         </div>
       ) : (
-        <div className="mb-3 rounded-2xl bg-slate-100 p-6 text-center text-sm text-slate-500">
-          No product images yet.
+        <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-50 to-indigo-50 p-12 text-center shadow-inner">
+          <span className="mx-auto mb-4 inline-block text-5xl">🖼️</span>
+          <p className="text-lg font-semibold text-slate-600">No images yet</p>
+          <p className="text-sm text-slate-500">Add photos to attract buyers</p>
         </div>
       )}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-slate-500">
-          Seller: {product.seller || "unknown"}
+
+      <footer className="space-y-4 pt-6 border-t border-slate-200">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-slate-500 font-medium">
+            Seller:{" "}
+            <span className="font-semibold text-slate-900">
+              {product.seller || "Unknown"}
+            </span>
+          </span>
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <Link
             to={`/product/${product._id}`}
-            className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+            className="btn-secondary text-sm px-6 py-2.5"
           >
-            View details
+            View Details →
           </Link>
+
           {currentUser && !owner && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <input
                 type="number"
                 min="1"
+                max="99"
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value))}
-                className="w-16 rounded border px-2 py-1 text-sm"
+                onChange={(e) =>
+                  setQuantity(Math.max(1, parseInt(e.target.value) || 1))
+                }
+                className="input-field w-20 text-center text-lg font-bold"
               />
               <button
                 onClick={handleAddToCart}
                 disabled={addingToCart}
-                className="rounded-full bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary text-sm px-6 py-2.5 flex items-center gap-2"
               >
-                {addingToCart ? "Adding..." : "Add to Cart"}
+                {addingToCart ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Adding...
+                  </>
+                ) : (
+                  "🛒 Add to Cart"
+                )}
               </button>
             </div>
           )}
+
           {owner && (
-            <button
-              onClick={() => onDelete(product._id)}
-              className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
-            >
-              Delete
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => onDelete(product._id)}
+                className="rounded-3xl bg-rose-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-rose-600 hover:shadow-md hover:-translate-y-0.5"
+              >
+                🗑️ Delete
+              </button>
+            </div>
           )}
         </div>
-      </div>
-      {owner && (
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
-          <label className="text-sm font-medium text-slate-700">
-            Add new images
-          </label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileChange}
-            className="rounded-2xl border border-slate-200 p-2"
-          />
-          <button
-            type="submit"
-            className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+
+        {owner && (
+          <form
+            onSubmit={handleSubmit}
+            className="mt-6 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"
           >
-            Upload Images
-          </button>
-        </form>
-      )}
-    </div>
+            <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <span className="text-indigo-600">📸</span>
+              Add new images
+            </label>
+            <div className="flex gap-3">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileChange}
+                className="input-field flex-1 file:mr-4 file:py-2.5 file:px-4 file:rounded-2xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/10 file:text-indigo-700 file:transition-all file:hover:bg-indigo-500/20 cursor-pointer"
+              />
+              <button
+                type="submit"
+                disabled={files.length === 0}
+                className="btn-primary px-6 py-2.5 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Upload ({files.length})
+              </button>
+            </div>
+          </form>
+        )}
+      </footer>
+    </article>
   );
 }

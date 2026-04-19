@@ -1,5 +1,5 @@
 import logger from '../utils/logger.js';
-import { parseQuery, buildSearchQuery, generateResponse, validateResponse } from '../utils/nlp.js';
+import { parseQueryWithAI, generateResponseWithAI } from '../utils/ai.js';
 import * as productService from './productService.js';
 import * as cartService from './cartService.js';
 
@@ -8,56 +8,50 @@ import * as cartService from './cartService.js';
  */
 export const processUserQuery = async (query, token) => {
     try {
-        logger.info({ query }, 'Processing user query');
+        logger.info({ query }, 'Processing AI query');
 
-        // Parse the natural language query
-        const filters = parseQuery(query);
+        // AI parse
+        const filters = await parseQueryWithAI(query);
 
-        // Validate if the query has enough information
-        if (!validateResponse(filters)) {
+        if (!filters.keywords || filters.keywords.length === 0) {
             return {
                 success: false,
-                message: 'I could not understand your query. Please provide more details like product name, category, or price range.',
-                confidence: filters.confidence,
+                message: 'Could not extract search terms from your query.',
             };
         }
 
-        // Build search query for Product Service
-        const searchParams = buildSearchQuery(filters);
+        // Build search query
+        const searchParams = {
+            q: filters.keywords.join(' '),
+            category: filters.category,
+            minPrice: filters.minPrice,
+            maxPrice: filters.maxPrice,
+            color: filters.color,
+            sort: filters.sortBy,
+            limit: filters.limit,
+        };
 
         // Search products
         const searchResults = await productService.searchProducts(searchParams, token);
 
-        if (!searchResults.data || searchResults.data.length === 0) {
-            return {
-                success: true,
-                message: `I couldn't find any products matching "${query}". Try searching with different keywords.`,
-                products: [],
-                confidence: filters.confidence,
-            };
-        }
+        const products = searchResults.data || searchResults || [];
+        const totalCount = searchResults.totalCount || products.length;
 
-        // Generate natural language response
-        const response = generateResponse(query, searchResults.data, searchResults.totalCount || searchResults.data.length);
+        // AI response
+        const message = await generateResponseWithAI(query, products);
 
         return {
             success: true,
-            message: response,
-            products: searchResults.data,
-            totalCount: searchResults.totalCount || searchResults.data.length,
-            confidence: filters.confidence,
-            filters: {
-                keywords: filters.keywords,
-                category: filters.category,
-                maxPrice: filters.maxPrice,
-                color: filters.color,
-            },
+            message,
+            products,
+            totalCount,
+            filters,
         };
     } catch (error) {
-        logger.error({ error: error.message, query }, 'Error processing user query');
+        logger.error({ error: error.message, query }, 'Error processing AI query');
         return {
             success: false,
-            message: 'An error occurred while processing your query. Please try again.',
+            message: 'AI processing failed. Please try again.',
             error: error.message,
         };
     }

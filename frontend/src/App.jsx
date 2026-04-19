@@ -9,6 +9,7 @@ import CreateProduct from "./pages/CreateProduct";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
+import AIBuddy from "./pages/AIBuddy";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -126,8 +127,8 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-slate-100">
         <Layout user={user} onLogout={handleLogout} />
-        <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl space-y-6">
+        <main className="py-12">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
             <AlertBar message={message} error={error} />
             <Routes>
               <Route
@@ -219,6 +220,7 @@ function App() {
               />
               <Route path="/cart" element={<Cart user={user} />} />
               <Route path="/orders" element={<Orders user={user} />} />
+              <Route path="/assistant" element={<AIBuddy user={user} />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

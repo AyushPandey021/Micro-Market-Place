@@ -4,8 +4,7 @@ import logger from '../utils/logger.js';
 const timeout = parseInt(process.env.REQUEST_TIMEOUT || 5000);
 
 const cartServiceClient = axios.create({
-    baseURL: process.env.CART_SERVICE_URL || 'http://localhost:5002',
-    timeout,
+    baseURL: process.env.CART_SERVICE_URL || 'http://localhost:5002', 
     headers: {
         'Content-Type': 'application/json',
     },

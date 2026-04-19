@@ -1,15 +1,16 @@
+import 'dotenv/config';
 import http from 'http';
-import dotenv from 'dotenv';
 import app from './src/app.js';
+import initSocketServer from './src/sockets/socket.server.js';
 import logger from './src/utils/logger.js';
-
-// Load environment variables
-dotenv.config();
 
 const PORT = process.env.PORT || 5005;
 
 // Create HTTP server
 const server = http.createServer(app);
+
+// Initialize socket.io server
+initSocketServer(server);
 
 // Start server
 server.listen(PORT, () => {

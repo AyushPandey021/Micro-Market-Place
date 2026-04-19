@@ -12,6 +12,16 @@ app.use(cors({
   credentials: true,
 }));
 
+// Service health check
+app.get('/health/services', async (req, res) => {
+  try {
+    // Simple ping
+    res.json({ status: 'healthy', services: 'ready' });
+  } catch (error) {
+    res.status(503).json({ status: 'unhealthy' });
+  }
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cookieParser());

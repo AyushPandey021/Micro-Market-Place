@@ -61,104 +61,158 @@ export default function AuthPage({
   };
 
   return (
-    <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 shadow-soft">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500">
-            Authentication
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">
-            {mode === "login" ? "Login" : "Register"}
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-indigo-50">
+      <div className="w-full max-w-2xl">
+        {/* Hero */}
+        <div className="text-center mb-12">
+          <div className="mx-auto h-24 w-24 rounded-3xl bg-gradient-to-br from-indigo-500 to-slate-900 flex items-center justify-center mb-8 shadow-2xl ring-4 ring-indigo-500/20">
+            <span className="text-4xl">🔐</span>
+          </div>
+          <h1 className="text-6xl font-black bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent mb-6">
+            {mode === "login" ? "Welcome Back" : "Join Marketplace"}
           </h1>
+          <p className="text-2xl text-slate-600 max-w-lg mx-auto leading-relaxed">
+            {mode === "login"
+              ? "Access your account securely"
+              : "Create your seller/buyer account"}
+          </p>
         </div>
-        <button
-          onClick={toggleMode}
-          className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-        >
-          {mode === "login" ? "Switch to register" : "Switch to login"}
-        </button>
-      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Username</span>
-          <input
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
-          />
-        </label>
-        <label className="block">
-          <span className="text-sm font-medium text-slate-700">Password</span>
-          <input
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
-          />
-        </label>
+        {/* Form Card */}
+        <div className="rounded-3xl border border-slate-200/50 bg-white/90 backdrop-blur-xl p-12 shadow-soft-lg shadow-glow">
+          {/* Toggle */}
+          <div className="flex justify-center mb-12">
+            <button
+              onClick={toggleMode}
+              className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-slate-100 to-indigo-100 px-10 py-4 text-xl font-bold text-slate-700 shadow-lg transition-all hover:from-slate-200 hover:to-indigo-200 hover:shadow-xl hover:-translate-y-1 active:scale-[0.98]"
+            >
+              {mode === "login" ? "🆕 Create Account" : "👤 Sign In"}
+            </button>
+          </div>
 
-        {mode === "register" && (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Core Fields */}
+            <div className="grid gap-6 sm:grid-cols-2">
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
-                  First Name
+                <span className="text-lg font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                  <span>👤</span> Username
                 </span>
                 <input
-                  name="firstName"
-                  value={form.firstName}
+                  name="username"
+                  value={form.username}
                   onChange={handleChange}
-                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
+                  required
+                  className="input-field text-lg py-5"
+                  placeholder="Your unique username"
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-medium text-slate-700">
-                  Last Name
+                <span className="text-lg font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                  <span>🔒</span> Password
                 </span>
                 <input
-                  name="lastName"
-                  value={form.lastName}
+                  name="password"
+                  type="password"
+                  value={form.password}
                   onChange={handleChange}
-                  className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
+                  required
+                  className="input-field text-lg py-5"
+                  placeholder="Secure password"
                 />
               </label>
             </div>
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">Email</span>
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-medium text-slate-700">Role</span>
-              <select
-                name="role"
-                value={form.role}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-slate-400"
-              >
-                <option value="seller">Seller</option>
-                <option value="user">User</option>
-              </select>
-            </label>
-          </>
-        )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {mode === "login" ? "Login" : "Register"}
-        </button>
-      </form>
+            {mode === "register" && (
+              <>
+                <div className="pt-8 border-t border-slate-200">
+                  <h3 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+                    <span className="text-indigo-600">📝</span>
+                    Profile Details
+                  </h3>
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-700 mb-2">
+                        First Name
+                      </span>
+                      <input
+                        name="firstName"
+                        value={form.firstName}
+                        onChange={handleChange}
+                        className="input-field"
+                        placeholder="John"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-semibold text-slate-700 mb-2">
+                        Last Name
+                      </span>
+                      <input
+                        name="lastName"
+                        value={form.lastName}
+                        onChange={handleChange}
+                        className="input-field"
+                        placeholder="Doe"
+                      />
+                    </label>
+                    <label className="block lg:col-span-2">
+                      <span className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <span>📧</span> Email
+                      </span>
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        className="input-field"
+                        placeholder="john@example.com"
+                      />
+                    </label>
+                    <label className="block lg:col-span-2">
+                      <span className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                        <span>🎭</span> Role
+                      </span>
+                      <select
+                        name="role"
+                        value={form.role}
+                        onChange={handleChange}
+                        className="input-field"
+                      >
+                        <option value="seller">
+                          🛒 Seller - Create & Manage Products
+                        </option>
+                        <option value="user">👤 Buyer - Shop & Browse</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full btn-primary text-xl py-7 flex items-center gap-3 shadow-2xl"
+            >
+              {submitting ? (
+                <>
+                  <div className="h-6 w-6 animate-spin rounded-full border-3 border-white border-t-transparent" />
+                  Processing...
+                </>
+              ) : mode === "login" ? (
+                <>
+                  <span>🚀</span>
+                  Sign In Securely
+                </>
+              ) : (
+                <>
+                  <span>✨</span>
+                  Create Account
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }

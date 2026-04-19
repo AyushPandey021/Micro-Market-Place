@@ -26,7 +26,10 @@
     "natural": "^6.7.0",
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "@langchain/core": "^0.2.5",
+    "@langchain/google-genai": "^0.0.9",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.5",

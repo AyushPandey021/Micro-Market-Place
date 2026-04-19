@@ -6,13 +6,23 @@ import logger from '../utils/logger.js';
  */
 export const verifyToken = (req, res, next) => {
     try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1]; // Extract token from "Bearer token"
+        let token;
 
-        if (!token) {
+        // Priority 1: Authorization header
+        const authHeader = req.headers['authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+            logger.debug('Token from header');
+        }
+        // Priority 2: cookie.token
+        else if (req.cookies && req.cookies.token) {
+            token = req.cookies.token;
+            logger.debug('Token from cookie');
+        } else {
+            logger.warn('No token found in header or cookie');
             return res.status(401).json({
                 success: false,
-                message: 'No token provided',
+                message: 'Authentication required. Login first.',
             });
         }
 

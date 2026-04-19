@@ -9,7 +9,7 @@ export const askBuddy = async (req, res) => {
         const { query, autoAddToCart } = req.body;
         const token = req.token;
 
-        logger.info({ query, autoAddToCart }, 'Ask Buddy endpoint called');
+        logger.info({ query, autoAddToCart, userId: req.user?.id, token: !!req.token }, 'Ask Buddy endpoint called');
 
         if (!token) {
             return res.status(401).json({

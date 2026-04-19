@@ -3,7 +3,12 @@ import jwt from "jsonwebtoken";
 import cookie from "cookie"; // correct parser
 
 async function initSocketServer(httpServer) {
-    const io = new Server(httpServer, {});
+    const io = new Server(httpServer, {
+        cors: {
+            origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+            credentials: true,
+        },
+    });
 
     io.use((socket, next) => {
         try {
@@ -14,7 +19,7 @@ async function initSocketServer(httpServer) {
             const token = cookies.token; // assuming cookie name = token
 
             if (!token) {
-                return next(new Error("Authentication error"));
+                return next(new Error('Authentication error'));
             }
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -22,15 +27,15 @@ async function initSocketServer(httpServer) {
 
             next();
         } catch (err) {
-            return next(new Error("Authentication error"));
+            return next(new Error('Authentication error'));
         }
     });
 
-    io.on("connection", (socket) => {
-        console.log("User connected 💓", socket.user);
+    io.on('connection', (socket) => {
+        console.log('User connected 💓', socket.user);
     });
 
-    return io; // optional but useful
+    return io;
 }
 
 export default initSocketServer;
