@@ -6,12 +6,6 @@ export default defineConfig({
     server: {
         port: 5173,
         proxy: {
-            '/api': {
-                target: 'http://localhost:5001', // Default to order service
-                changeOrigin: true,
-                secure: false,
-                rewrite: (path) => path
-            },
             '/api/auth': {
                 target: 'http://localhost:3000',
                 changeOrigin: true,
@@ -24,14 +18,20 @@ export default defineConfig({
                 secure: false,
                 rewrite: (path) => path
             },
+            '/api/cart': {
+                target: 'http://localhost:5002',
+                changeOrigin: true,
+                secure: false,
+                rewrite: (path) => path
+            },
             '/api/orders': {
                 target: 'http://localhost:5001',
                 changeOrigin: true,
                 secure: false,
                 rewrite: (path) => path
             },
-            '/api/cart': {
-                target: 'http://localhost:5002',
+            '/api': {
+                target: 'http://localhost:5001', // Default to order service
                 changeOrigin: true,
                 secure: false,
                 rewrite: (path) => path

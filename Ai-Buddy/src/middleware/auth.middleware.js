@@ -1,0 +1,65 @@
+import jwt from 'jsonwebtoken';
+import logger from '../utils/logger.js';
+
+/**
+ * Verify JWT token
+ */
+export const verifyToken = (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1]; // Extract token from "Bearer token"
+
+        if (!token) {
+            return res.status(401).json({
+                success: false,
+                message: 'No token provided',
+            });
+        }
+
+        jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, user) => {
+            if (err) {
+                logger.warn({ error: err.message }, 'Token verification failed');
+                return res.status(403).json({
+                    success: false,
+                    message: 'Invalid or expired token',
+                });
+            }
+
+            req.user = user;
+            req.token = token;
+            next();
+        });
+    } catch (error) {
+        logger.error(error, 'Auth middleware error');
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+        });
+    }
+};
+
+/**
+ * Optional token verification (doesn't fail if no token)
+ */
+export const optionalVerifyToken = (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (token) {
+            jwt.verify(token, process.env.JWT_SECRET || 'secret', (err, user) => {
+                if (!err) {
+                    req.user = user;
+                    req.token = token;
+                } else {
+                    logger.warn({ error: err.message }, 'Optional token verification failed');
+                }
+            });
+        }
+
+        next();
+    } catch (error) {
+        logger.error(error, 'Optional auth middleware error');
+        next();
+    }
+};

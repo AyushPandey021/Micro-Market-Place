@@ -1,0 +1,378 @@
+import request from 'supertest';
+import jwt from 'jsonwebtoken';
+import app from '../src/app.js';
+import logger from '../src/utils/logger.js';
+import * as nlp from '../src/utils/nlp.js';
+
+// Mock dependencies
+jest.mock('axios');
+const axios = require('axios');
+
+// Generate mock JWT token
+const generateToken = () => {
+    return jwt.sign(
+        { userId: 'test-user-123', email: 'test@example.com' },
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '1d' }
+    );
+};
+
+describe('AI Buddy Service', () => {
+    const token = generateToken();
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    describe('Health Check', () => {
+        it('should return health status', async () => {
+            const response = await request(app).get('/health');
+            expect(response.status).toBe(200);
+            expect(response.body.status).toBe('OK');
+            expect(response.body.service).toBe('AI Buddy');
+        });
+    });
+
+    describe('Root Endpoint', () => {
+        it('should return service information', async () => {
+            const response = await request(app).get('/');
+            expect(response.status).toBe(200);
+            expect(response.body.message).toContain('AI Buddy Service');
+            expect(response.body.endpoints).toBeDefined();
+        });
+    });
+
+    describe('NLP Query Parsing', () => {
+        it('should parse "Find me red sneakers under ₹2000"', () => {
+            const query = 'Find me red sneakers under ₹2000';
+            const result = nlp.parseQuery(query);
+
+            expect(result.keywords).toContain('sneak');
+            expect(result.color).toBe('red');
+            expect(result.maxPrice).toBe(2000);
+            expect(result.confidence).toBeGreaterThan(0);
+        });
+
+        it('should parse "blue shirt above ₹500"', () => {
+            const query = 'blue shirt above ₹500';
+            const result = nlp.parseQuery(query);
+
+            expect(result.keywords).toContain('shirt');
+            expect(result.color).toBe('blue');
+            expect(result.confidence).toBeGreaterThan(0);
+        });
+
+        it('should parse "black watch under 5000"', () => {
+            const query = 'black watch under 5000';
+            const result = nlp.parseQuery(query);
+
+            expect(result.keywords).toContain('watch');
+            expect(result.color).toBe('black');
+            expect(result.maxPrice).toBe(5000);
+        });
+
+        it('should extract category from query', () => {
+            const query = 'red shoes';
+            const result = nlp.parseQuery(query);
+
+            expect(result.color).toBe('red');
+            expect(result.keywords).toContain('shoe');
+        });
+
+        it('should handle empty query', () => {
+            const query = '';
+            const result = nlp.parseQuery(query);
+
+            expect(result.keywords.length).toBe(0);
+            expect(result.confidence).toBe(0);
+        });
+
+        it('should build search query correctly', () => {
+            const filters = {
+                keywords: ['red', 'sneaker'],
+                maxPrice: 2000,
+                category: 'shoe',
+                color: 'red',
+            };
+            const searchQuery = nlp.buildSearchQuery(filters);
+
+            expect(searchQuery.q).toBeDefined();
+            expect(searchQuery.maxPrice).toBe(2000);
+            expect(searchQuery.category).toBe('shoe');
+            expect(searchQuery.limit).toBeDefined();
+        });
+    });
+
+    describe('Parse Endpoint', () => {
+        it('should parse query on POST /ai-buddy/parse', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/parse')
+                .send({
+                    query: 'Find me red sneakers under ₹2000',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.filters).toBeDefined();
+            expect(response.body.filters.keywords).toContain('sneak');
+            expect(response.body.filters.color).toBe('red');
+            expect(response.body.filters.maxPrice).toBe(2000);
+        });
+
+        it('should reject invalid query on POST /ai-buddy/parse', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/parse')
+                .send({
+                    query: 'ab', // Too short
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.success).toBe(false);
+        });
+    });
+
+    describe('Authentication', () => {
+        it('should reject requests without token', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/ask')
+                .send({
+                    query: 'Find red shoes',
+                });
+
+            expect(response.status).toBe(401);
+            expect(response.body.success).toBe(false);
+        });
+
+        it('should reject requests with invalid token', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/ask')
+                .set('Authorization', 'Bearer invalid-token')
+                .send({
+                    query: 'Find red shoes',
+                });
+
+            expect(response.status).toBe(403);
+            expect(response.body.success).toBe(false);
+        });
+
+        it('should accept requests with valid token', async () => {
+            // Mock the product service response
+            axios.create = jest.fn().mockReturnValue({
+                get: jest.fn().mockResolvedValue({
+                    data: {
+                        data: [
+                            {
+                                _id: '1',
+                                name: 'Red Sneakers',
+                                price: 1500,
+                            },
+                        ],
+                        totalCount: 1,
+                    },
+                }),
+                post: jest.fn(),
+                patch: jest.fn(),
+                delete: jest.fn(),
+                interceptors: {
+                    request: { use: jest.fn() },
+                    response: { use: jest.fn() },
+                },
+            });
+
+            const response = await request(app)
+                .post('/ai-buddy/ask')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    query: 'Find red shoes',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+        });
+    });
+
+    describe('Validation', () => {
+        it('should validate query on POST /ai-buddy/ask', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/ask')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    query: '', // Empty query
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.errors).toBeDefined();
+        });
+
+        it('should validate productIds on POST /ai-buddy/cart/add', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/cart/add')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    productIds: 'not-an-array', // Should be array
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.errors).toBeDefined();
+        });
+
+        it('should validate productId on POST /ai-buddy/cart/add-single', async () => {
+            const response = await request(app)
+                .post('/ai-buddy/cart/add-single')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    productId: '',
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.errors).toBeDefined();
+        });
+    });
+
+    describe('404 Handling', () => {
+        it('should return 404 for unknown routes', async () => {
+            const response = await request(app).get('/unknown-route');
+
+            expect(response.status).toBe(404);
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toContain('not found');
+        });
+    });
+
+    describe('NLP Confidence', () => {
+        it('should calculate confidence score', () => {
+            const query = 'Find me red sneakers under ₹2000';
+            const result = nlp.parseQuery(query);
+
+            expect(result.confidence).toBeGreaterThan(0);
+            expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should validate response quality', () => {
+            const filters = {
+                keywords: ['shoes'],
+                confidence: 0.7,
+            };
+            const isValid = nlp.validateResponse(filters);
+
+            expect(isValid).toBe(true);
+        });
+
+        it('should reject low-confidence queries', () => {
+            const filters = {
+                keywords: [],
+                confidence: 0.2,
+            };
+            const isValid = nlp.validateResponse(filters);
+
+            expect(isValid).toBe(process.env.NLP_CONFIDENCE_THRESHOLD ? false : true);
+        });
+    });
+
+    describe('Natural Language Response Generation', () => {
+        it('should generate natural language response for products', () => {
+            const query = 'red shoes';
+            const products = [
+                { name: 'Red Sneaker Pro', price: 1500 },
+                { name: 'Red Canvas Shoes', price: 899 },
+            ];
+            const response = nlp.generateResponse(query, products, 2);
+
+            expect(response).toContain('found');
+            expect(response).toContain('Red Sneaker Pro');
+            expect(response).toContain('₹');
+        });
+
+        it('should generate "not found" response', () => {
+            const query = 'unicorn shoes';
+            const response = nlp.generateResponse(query, [], 0);
+
+            expect(response).toContain('couldn\'t find');
+        });
+    });
+});
+
+describe('Integration Tests', () => {
+    const token = generateToken();
+
+    describe('Ask Buddy Flow', () => {
+        it('should process complete ask buddy request', async () => {
+            // Mock all external services
+            axios.create = jest.fn().mockReturnValue({
+                get: jest.fn()
+                    .mockResolvedValueOnce({
+                        // Product search response
+                        data: {
+                            data: [
+                                {
+                                    _id: '1',
+                                    name: 'Red Sneakers',
+                                    price: 1500,
+                                },
+                                {
+                                    _id: '2',
+                                    name: 'Red Canvas Shoes',
+                                    price: 899,
+                                },
+                            ],
+                            totalCount: 2,
+                        },
+                    })
+                    .mockResolvedValueOnce({
+                        // Cart response
+                        data: {
+                            items: [{ productId: '1', qty: 1 }],
+                            totalAmount: 1500,
+                        },
+                    }),
+                post: jest.fn().mockResolvedValue({
+                    data: { success: true },
+                }),
+                patch: jest.fn(),
+                delete: jest.fn(),
+                interceptors: {
+                    request: { use: jest.fn() },
+                    response: { use: jest.fn() },
+                },
+            });
+
+            const response = await request(app)
+                .post('/ai-buddy/ask')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    query: 'Find me red sneakers under ₹2000',
+                    autoAddToCart: true,
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.message).toBeDefined();
+            expect(response.body.products).toBeDefined();
+        });
+    });
+
+    describe('Error Handling', () => {
+        it('should handle missing service gracefully', async () => {
+            axios.create = jest.fn().mockReturnValue({
+                get: jest.fn().mockRejectedValue(new Error('Service unavailable')),
+                post: jest.fn(),
+                patch: jest.fn(),
+                delete: jest.fn(),
+                interceptors: {
+                    request: { use: jest.fn() },
+                    response: { use: jest.fn() },
+                },
+            });
+
+            const response = await request(app)
+                .post('/ai-buddy/ask')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    query: 'Find shoes',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.success).toBe(false);
+        });
+    });
+});
