@@ -315,7 +315,7 @@ export default function Orders({ user }) {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

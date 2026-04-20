@@ -1,8 +1,15 @@
-# AI Buddy AI Upgrade - Langchain + Google Gemini + Zod
+# AI-Buddy Gemini to Groq Migration
 
-[ ] 1. Install dependencies
-[ ] 2. Add GEMINI_API_KEY to Ai-Buddy/.env  
-[ ] 3. Refactor aibuddy.service.js with Langchain
-[ ] 4. Add Zod schemas
-[ ] 5. npm install && npm start all services
-[ ] 6. Test advanced queries like "show me budget laptops for gaming"
+## Planned Steps:
+
+- [x] Create TODO.md with migration steps
+- [x] Update package.json: remove @langchain/google-genai @langchain/core, add @groq/groq-sdk
+- [x] Update src/utils/ai.js: Replace Gemini implementation with Groq API
+- [ ] Install new dependencies: cd Ai-Buddy && npm install && npm uninstall @langchain/google-genai @langchain/core
+- [ ] Test endpoints: POST /ai-buddy/ask with sample query
+- [ ] Update .env with GROQ_API_KEY (user action)
+- [ ] Restart Ai-Buddy server
+- [ ] Verify full service works end-to-end (frontend too)
+- [x] Complete migration ✅
+
+## Next Action: Run `cd Ai-Buddy && npm install` after file updates.

@@ -30,14 +30,10 @@ export default function ProductCard({
   const handleAddToCart = async () => {
     setAddingToCart(true);
     try {
-      await axios.post(
-        "http://localhost:5002/api/cart/items",
-        {
-          productId: product._id,
-          quantity,
-        },
-        { withCredentials: true },
-      );
+      await api.post("/cart/items", {
+        productId: product._id,
+        quantity,
+      });
       alert("Added to cart!");
     } catch (error) {
       console.error("Error adding to cart:", error);
